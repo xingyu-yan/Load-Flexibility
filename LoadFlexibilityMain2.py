@@ -25,9 +25,13 @@ reader = csv.reader(csvFile)
 rows = [row for row in reader]
 Load = np.mat(rows)
 
+for index in range(len(Load[0].T)):
+    print('The column %d is: ' % index + str(Load[0,index]))
+
+# Country = input('Which Country Do You Want to Choose: ')
+    
 Flexibility_Day = []
 Flexibility_Week = []
-
 for i in range(13):
     # 字符串转换为数字
     Load_Sub = list(map(float,Load[1:8761,i+3]))
@@ -37,11 +41,10 @@ for i in range(13):
     Flexibility_Week.append(Flexi_Week)
     print('Calculating the Flexibility of ' + Load_Sub_Name)
     
-
 # Plot the result  
 plt.figure()
-x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 labels = ['GB', 'EPT', 'EUR_SE', 'Central Asia', 'PRC', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
+x = range(len(labels))
 plt.plot(x, Flexibility_Day, label='Daily Load Flexibility')
 plt.plot(x, Flexibility_Week, label='Weekly Load Flexibility')
 plt.xticks(x, labels, rotation='vertical') # rotation=45
@@ -49,4 +52,6 @@ plt.title('NetLoad Flexibility')
 plt.ylabel('MWh')
 plt.xlabel('Time (Hour)')
 plt.legend()
-plt.show()  
+plt.show() 
+
+print('Congratulations, task completed !') 
