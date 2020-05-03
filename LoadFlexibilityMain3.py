@@ -105,7 +105,7 @@ for i in range(13):
 # plt.xlabel('Country/Region')
 # plt.show() 
 
-fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True, dpi = 600)
 Locations = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
 x = np.arange(len(Locations))
 labels = ['Daily Load Flexibility', 'Weekly Load Flexibility', 'Yearly Load Flexibility']
@@ -125,7 +125,7 @@ plt.show()
 
 # Plot the average daily residual load results
 #Plot the Load of PRC  
-plt.figure()
+plt.figure(dpi = 600)
 label = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
 for i in range(len(Ave_Hourly_Load)):
     plt.plot(Ave_Hourly_Load[i], label=label[i])
@@ -136,7 +136,7 @@ plt.xlabel('Time (Hour)')
 plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.show()
 
-plt.figure()
+plt.figure(dpi = 600)
 label = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
 for i in range(len(Ave_Hourly_Load)):
     plt.plot(Hourly_Graddient[i], label=label[i])
