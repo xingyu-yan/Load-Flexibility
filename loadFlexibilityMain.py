@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Apr 26 09:11:39 2020
+Created on Thu May 14 11:26:41 2020
 At GEIDCO, Beijing
 @author: Xingyu
 Objective: Load Flexibility Calculation 
@@ -10,27 +10,58 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from FlexibilityFunc import FlexibilityCalculate, Ave_Resi_Load
+from ThermalMinCapFunc import thermalMinCap
 
-import os
-print('getcwd: ', os.getcwd())
-print('__file__: ', __file__)
+# import os
+# print('getcwd: ', os.getcwd())
+# print('__file__: ', __file__)
 
 # 读取csv文件
 
-# 方法1
-# csvFile = open("HourlyData_Region_2035_NetLoad_OR.csv", "r")
-# reader = csv.DictReader(csvFile) 
-# column = [row['FR'] for row in reader] # 选取法国的数据作为计算对象
-# csvFile.close()
-# print('The Column Number of All Load is %d' % len(column))
-# Load = list(map(float, column)) # 字符串转换为数字  
+with open('IOCurve_Thermal.csv', 'r') as csvFile:
+    reader = csv.reader(csvFile) 
+    rows = [row for row in reader]
+    print('File info: ' + str(rows[0]))
 
-# 方法2
-# csvFile = open('HourlyData_Region_2035_NetLoad_OR.csv', 'r')
-# reader = csv.reader(csvFile) 
-# csvFile.close()
+# FirstLine = rows[2]
+# for index in range(len(FirstLine)):
+#     print('The column %d is: ' % index + str(FirstLine[index]))
 
-# 方法3  HourlyData_Generator_2035 
+rowsMat = np.mat(rows[3:len(rows)])   
+generator_Name = []
+minCap = []
+
+for i in range(len(rows)-3):
+    generator_Name.append(rowsMat[i,1].lower())
+    minCap.append(rowsMat[i,5])
+ 
+dictionary = dict(zip(generator_Name, minCap))
+
+# 2 Read HourlyData_Generator_2035.csv file 
+with open('HourlyData_Generator_2035.csv', 'r') as csvFile:
+    reader = csv.reader(csvFile) 
+    rows = [row for row in reader]
+    print('File info: ' + str(rows[0]))
+
+rowsMat = np.mat(rows[4:len(rows)])
+
+(it, pl, cn, gb, sc, casia, de, fr, eur, bl, bnl, ept, ch) = thermalMinCap(rowsMat, dictionary)
+    
+thermalMC = [gb, ept, eur, casia, cn, fr, bnl, de, ch, pl, sc, bl, it]
+
+#Plot the Load of PRC  
+thermalMCnoCN = [gb, ept, eur, casia, fr, bnl, de, ch, pl, sc, bl, it] # Skip cn
+plt.figure(dpi = 600)
+label = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
+for i in range(len(thermalMCnoCN)):
+    plt.plot(np.array(thermalMCnoCN[i])/1000, label=label[i])
+plt.title('Min Capacity of Thermal Units')
+plt.ylabel('GW')
+plt.xlabel('Time (Hour)')
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.show()
+
+# HourlyData_Generator_2035 
 with open('HourlyData_Region_2035_NetLoad_OR.csv', 'r') as csvFile:
     reader = csv.reader(csvFile) 
     rows = [row for row in reader]
@@ -41,15 +72,35 @@ for index in range(len(FirstLine)):
     print('The column %d is: ' % index + str(FirstLine[index]))
 
 # Load = np.mat(rows[5:len(rows)])[0:8761,3:16]    
-Load = np.mat(rows[4:len(rows)])[0:8761]
+Load = np.mat(rows[4:len(rows)])[0:8761]  
 
-# #Plot the Load of PRC  
+NetLoad = Load.copy() # attention, use copy to duplicate
+for i in range(13):
+    for j in range(8760):
+        NetLoad[j+1,i+3] = float(Load[j+1,i+3]) - thermalMC[i][j]
+        
+    #Plot the Net Load of each Region 
+    Load_Name = NetLoad[0,i+3]
+    plt.figure()
+    plt.plot(Load[1:8761,i+3], label='Load minus PV and Wind')
+    plt.plot(NetLoad[1:8761,i+3], label='Load minus PV, Wind, and Min Cap')
+    plt.plot(thermalMC[i], label='Thermal Min Cap')
+    label = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
+    plt.title('NetLoad profile of ' + Load_Name)
+    plt.ylabel('MW')
+    plt.xlabel('Time (Hour)')
+    plt.legend()
+    plt.show()
+       
+#Plot the Net Load of FR  
 # plt.figure()
-# plt.plot(Load[1:8761,7])
-# # plt.plot(Load[0:168])
-# plt.title('NetLoad profile of PRC')
+# plt.plot(Load[1:8761,8], label='Load minus PV and Wind')
+# plt.plot(NetLoad[1:8761,8], label='Load minus PV, Wind, and Min Cap')
+# plt.plot(thermalMC[5], label='Thermal Min Cap in FR')
+# plt.title('NetLoad profile of FR')
 # plt.ylabel('MW')
 # plt.xlabel('Time (Hour)')
+# plt.legend()
 # plt.show()
 
 # Country = input('Which Country Do You Want to Choose: ')
@@ -64,14 +115,12 @@ for i in range(13):
     # 字符串转换为数字
     if i == 4:
         print()
-        print('Skip the ' + Load[0,i+3] )
+        print('Skip the ' + NetLoad[0,i+3])
         print()
     else:
-        Load_Sub = list(map(float,Load[1:8761,i+3]))
-        Load_Sub_Name = 'Load_' + Load[0,i+3]
-        print('Calculating the Flexibility of ' + Load_Sub_Name)
-        
-        
+        Load_Sub = list(map(float, NetLoad[1:8761,i+3]))
+        Load_Sub_Name = 'Load_' + NetLoad[0,i+3]
+        print('Calculating the Flexibility of ' + Load_Sub_Name)        
         
         (Flexi_Day, Flexi_Week, Flexi_Year) = FlexibilityCalculate(Load_Sub, Load_Sub_Name)
         Flexibility_Day.append(Flexi_Day)

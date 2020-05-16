@@ -14,15 +14,15 @@ import matplotlib.pyplot as plt
 # print('getcwd: ', os.getcwd())
 # print('__file__: ', __file__)
 
-# 1 Read IOCurve_Thermal.csv file to build a d'ict for minCap of' each generator
+# 1 Read IOCurve_Thermal.csv file to build a dict for minCap of each generator
 with open('IOCurve_Thermal.csv', 'r') as csvFile:
     reader = csv.reader(csvFile) 
     rows = [row for row in reader]
+    print('File info: ' + str(rows[0]))
 
-print('File info: ' + str(rows[0]))
-FirstLine = rows[2]
-for index in range(len(FirstLine)):
-    print('The column %d is: ' % index + str(FirstLine[index]))
+# FirstLine = rows[2]
+# for index in range(len(FirstLine)):
+#     print('The column %d is: ' % index + str(FirstLine[index]))
 
 rowsMat = np.mat(rows[3:len(rows)])   
 generator_Name = []
@@ -50,11 +50,11 @@ dictionary = dict(zip(generator_Name, minCap))
 with open('HourlyData_Generator_2035.csv', 'r') as csvFile:
     reader = csv.reader(csvFile) 
     rows = [row for row in reader]
-
-print('File info: ' + str(rows[0]))
-FirstLine = (rows[4])[3:-1]
+    print('File info: ' + str(rows[0]))
 
 rowsMat = np.mat(rows[4:len(rows)])
+
+FirstLine = (rowsMat[0,3:-1].tolist())[0]
 
 splitName = []
 for index in range(len(FirstLine)):
@@ -66,12 +66,11 @@ NameGen = []
 NameCoun = []
 
 for i in range(len(splitName)):
-    a = (splitName[i])[0].lower()
-    b = (splitName[i])[1].lower()
-    NameGen.append(a)
-    NameCoun.append(b)
+    gN = (splitName[i])[0].lower()
+    NameGen.append((splitName[i])[0].lower())
+    NameCoun.append((splitName[i])[1].lower())
     gen = rowsMat[:,i+3]
-    if (a == 'bio')or(a == 'gas')or(a == 'nuclear')or(a == 'coal'):
+    if (gN == 'bio')or(gN == 'gas')or(gN == 'nuclear')or(gN == 'coal'):
         ThermalGen.append(gen)
         # print('This good colomn is ' + str((splitName[i])[0]))
     else:
@@ -102,7 +101,6 @@ de = []
 fr = []
 eur = []
 bl = []
-at = []
 bnl = []
 ept = []
 gr = []
@@ -112,50 +110,113 @@ for i in range(len(thermalGenMinCap[0,:])):
     itemName = thermalGenMinCap[0,i].lower()    
     minCapGen = float(dictionary[itemName])
     print('The min capacity of', itemName, 'is', minCapGen)
-    for j in range(len(thermalGenMinCap[0:-1,0])):        
-        if float(thermalGenMinCap[j+1,i]) >= 0.1:
-            thermalGenMinCap[j+1,i] = minCapGen
-        else:
-            thermalGenMinCap[j+1,i] = 0        
     
     itemNameCountry = (itemName.split('_'))[1]
-    if itemNameCountry == 'it':
-        it.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'pl':
-        pl.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'cn':
-        cn.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'gb':
-        gb.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'casia':
-        casia.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'de':
-        de.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'fr':
-        fr.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'eur':
-        eur.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'bl':
-        bl.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'at':
-        at.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'bnl':
-        bnl.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'ept':
-        ept.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'gr':
-        gr.append(thermalGenMinCap[:,i])
-    elif itemNameCountry == 'ch':
-        ch.append(thermalGenMinCap[:,i])
-    else:
-        print('Attention! There is no this kind of generator.')
-
     
-# #Plot the Load of PRC  
-# plt.figure()
-# plt.plot(Load[1:8761,7])
-# # plt.plot(Load[0:168])
-# plt.title('NetLoad profile of PRC')
-# plt.ylabel('MW')
-# plt.xlabel('Time (Hour)')
-# plt.show()
+    for j in range(8760):        
+        if float(thermalGenMinCap[j+1,i]) >= 0.1:
+            thermalGenMinCap[j+1,i] = float(minCapGen)
+        else:
+            thermalGenMinCap[j+1,i] = float(0) 
+        
+    if itemNameCountry == 'it':
+        it = it + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'pl':
+        pl = pl + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'cn':
+        cn = cn + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'gb':
+        gb = gb + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'casia':
+        casia = casia + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'de':
+        de = de + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'fr':
+        fr = fr + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'eur':
+        if (itemName.split('_'))[2] == 'c':
+            pl = pl + thermalGenMinCap[1:8761,i].tolist()
+        elif (itemName.split('_'))[2] == 'se':
+            eur = eur + thermalGenMinCap[1:8761,i].tolist()
+        else:
+            print('Attention! There is a problem with area EUR.')
+    elif itemNameCountry == 'bl':
+        bl = bl + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'bnl':
+        bnl = bnl + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'ept':
+        ept = ept + thermalGenMinCap[1:8761,i].tolist()
+    elif itemNameCountry == 'gr':
+        gr = gr + thermalGenMinCap[1:8761,i].tolist()
+    elif (itemNameCountry == 'ch')or(itemNameCountry == 'at'):
+        ch = ch + thermalGenMinCap[1:8761,i].tolist()
+    else:
+        print('Attention! There is no ', itemName)
+            
+        # if itemNameCountry == 'it':
+        #     it.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'pl':
+        #     pl.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'cn':
+        #     cn.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'gb':
+        #     gb.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'casia':
+        #     casia.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'de':
+        #     de.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'fr':
+        #     fr.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'eur':
+        #     if (itemName.split('_'))[2] == 'c':
+        #         pl.append(thermalGenMinCap[j+1,i])
+        #     elif (itemName.split('_'))[2] == 'se':
+        #         eur.append(thermalGenMinCap[j+1,i])
+        #     else:
+        #         print('Attention! There is a problem with area EUR.')
+        # elif itemNameCountry == 'bl':
+        #     bl.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'bnl':
+        #     bnl.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'ept':
+        #     ept.append(thermalGenMinCap[j+1,i])
+        # elif itemNameCountry == 'gr':
+        #     gr.append(thermalGenMinCap[j+1,i])
+        # elif (itemNameCountry == 'ch')or(itemNameCountry == 'at'):
+        #     ch.append(thermalGenMinCap[j+1,i])
+        # else:
+        #     print('Attention! There is no ', itemName)
+
+# a = [0,1,2,3,4,5,6,7]
+# a1= np.array(np.reshape(a, (4, -1)), dtype = 'float_')
+# a2= np.array(np.reshape(a, (4, -1), order='F'), dtype = 'float_')
+# a3= np.array(np.reshape(a, (4, -1)), dtype = 'float_').sum(axis=1).tolist()
+# a4= np.array(np.reshape(a, (4, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+
+it = np.array(np.reshape(it, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+pl = np.array(np.reshape(pl, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+cn = np.array(np.reshape(cn, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+gb = np.array(np.reshape(gb, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+sc = np.array(np.reshape(sc, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+casia = np.array(np.reshape(casia, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+de = np.array(np.reshape(de, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+fr = np.array(np.reshape(fr, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+eur = np.array(np.reshape(eur, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+bl = np.array(np.reshape(bl, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+bnl = np.array(np.reshape(bnl, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+ept = np.array(np.reshape(ept, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+# gr = np.array(np.reshape(gr, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+ch = np.array(np.reshape(ch, (8760, -1), order='F'), dtype = 'float_').sum(axis=1).tolist()
+
+thermalMCnoCN = [gb, ept, eur, casia, fr, bnl, de, ch, pl, sc, bl, it] # Skip cn
+
+#Plot the Load of PRC  
+plt.figure(dpi = 600)
+label = ['GB', 'EPT', 'EUR_SE', 'Cent_Asia', 'FR', 'BNL', 'DE', 'CH', 'PL', 'SC', 'BL', 'IT']
+for i in range(len(thermalMCnoCN)):
+    plt.plot(np.array(thermalMCnoCN[i])/1000, label=label[i])
+plt.title('Min Capacity of Thermal Units')
+plt.ylabel('GW')
+plt.xlabel('Time (Hour)')
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.show()

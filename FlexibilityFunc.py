@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # average daily residual load
-def Ave_Resi_Load(Load, Load_Sub_Name): 
+def Ave_Resi_Load(Load: list, Load_Sub_Name: str): 
     print('Calculating the Average Daily Residual Load of ' + Load_Sub_Name +' ...')
     Load_Mat = np.reshape(Load, (-1, 24))/1000  # /1000: MW to GW
     
@@ -146,27 +146,23 @@ def FlexibilityCalculate(Load, Load_Name):
     # 2计算每年中每月的波动性
     # 每年平均值
     AVE_Year = np.mean(Load) 
-    Load_Mat_Year_Month_Dif = AVE_Month - AVE_Year
+    Load_Year_Month_Dif = AVE_Month - AVE_Year
 
     # 计算周灵活性 Flexibility
-    Flexi_Year = np.array(np.abs(Load_Mat_Year_Month_Dif).sum())/2/1000
+    Flexi_Year = np.array(np.abs(Load_Year_Month_Dif).sum())/2/1000
     # 2:只计算平均值上面部分； /1000: MWh to GWh
     print('Yearly Flexibility of ' + Load_Name + ' Is %d GWh' % Flexi_Year)    
     
     # plot the yearly flexibility
 
-    x1 = np.reshape((np.repeat(AVE_Year, 12))/1000, (1, -1)).tolist()  # /1000: MW to GW
-    x2 = x1[0]
-    Load_Mat_Year_Month_Dif_toList = np.reshape(np.mat(Load_Mat_Year_Month_Dif), (1, -1)).tolist()
-    y1 = x1 - np.array(Load_Mat_Year_Month_Dif_toList[0])
-    y2 = y1[0]
+    x = np.reshape((np.repeat(AVE_Year, 12))/1000, (1, -1)).tolist()[0]  # /1000: MW to GW  
+    Load_Year_Month_Dif_toList = (np.reshape(np.mat(Load_Year_Month_Dif)/1000, (1, -1)).tolist())[0]
+    y =  [x[i]+Load_Year_Month_Dif_toList[i] for i in range(0,len(x))]
     
     plt.figure()
-    plt.plot(x2, label="Annual Average Load")  
-    plt.plot(y2, label="Monthly Average Load") # /1000: MW to GW
-    # plt.plot(np.abs(Load_Mat_Week_Day_Dif_toList_Weeks[0]), label="Weekly Flexibility")
-    # plt.tight_layout()
-    plt.fill_between(range(12), x2, y2, facecolor="orange", # The fill color
+    plt.plot(x, label="Annual Average Load")  
+    plt.plot(y, label="Monthly Average Load") # /1000: MW to GW
+    plt.fill_between(range(12), x, y, facecolor="orange", # The fill color
                       color='blue',       # The outline color
                       alpha=0.2 )
     plt.title('Yearly Load Flexibility of ' + Load_Name)
